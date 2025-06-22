@@ -1,3 +1,5 @@
+import streamlit as st
+
 class RuleBasedChatbot:
     def __init__(self):
         self.rules = {
@@ -16,11 +18,31 @@ class RuleBasedChatbot:
                 return self.rules[pattern]
         return "I'm not sure how to respond to that. Try saying 'help'."
 
-# Example usage:
-chatbot = RuleBasedChatbot()
-while True:
-    user_input = input("You: ")
-    if user_input.lower() in ['exit', 'quit']:
-        print("Chatbot: Goodbye!")
-        break
-    print("Chatbot:", chatbot.respond(user_input))
+def main():
+    st.title("Simple Rule-Based Chatbot")
+    st.write("Welcome! Type a message and press Enter to chat.")
+
+    # Initialize session state for chat history
+    if 'chat_history' not in st.session_state:
+        st.session_state.chat_history = []
+
+    chatbot = RuleBasedChatbot()
+
+    # Get user input
+    user_input = st.text_input("You:", key="user_input")
+
+    # Process user input
+    if user_input:
+        response = chatbot.respond(user_input)
+        st.session_state.chat_history.append(("You", user_input))
+        st.session_state.chat_history.append(("Bot", response))
+
+    # Display chat history
+    for role, message in st.session_state.chat_history:
+        if role == "You":
+            st.write(f"👤 You: {message}")
+        else:
+            st.write(f"🤖 Bot: {message}")
+
+if __name__ == "__main__":
+    main()
