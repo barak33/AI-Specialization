@@ -17,6 +17,13 @@ class RuleBasedChatbot:
             "good morning": "Good morning! How can I brighten your day?",
             "good evening": "Good evening! How may I assist you tonight?"
         }
+        
+    def respond(self, message):
+        message = message.lower().strip()
+        for pattern in self.rules:
+            if pattern in message:
+                return self.rules[pattern]
+        return "I'm not sure how to respond to that. Try saying 'help' or 'what can you do'."
 
 def initialize_session_state():
     if 'chat_history' not in st.session_state:
