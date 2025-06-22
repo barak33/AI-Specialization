@@ -38,9 +38,46 @@ def main():
         layout="wide"
     )
 
-    # Custom CSS for better UI
+    st.title("🤖 AI Assistant")
+    
+    # Custom CSS for chat alignment
     st.markdown("""
     <style>
+        /* Chat container styling */
+        .stChatMessage {
+            padding: 1rem;
+            border-radius: 15px;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* User message styling - right align */
+        .user-message {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .user-message > div {
+            background-color: #2e7bf6;
+            color: white;
+            border-radius: 20px 20px 0 20px;
+            padding: 10px 15px;
+            max-width: 70%;
+            margin-left: 30%;
+        }
+        
+        /* Assistant message styling - left align */
+        .assistant-message {
+            display: flex;
+            justify-content: flex-start;
+        }
+        .assistant-message > div {
+            background-color: #f0f2f6;
+            border-radius: 20px 20px 20px 0;
+            padding: 10px 15px;
+            max-width: 70%;
+            margin-right: 30%;
+        }
+        
+        /* Input container styling */
         div.stButton > button {
             width: 100%;
             border-radius: 20px;
@@ -48,59 +85,47 @@ def main():
         .stTextInput > div > div > input {
             border-radius: 20px;
         }
-        div.css-1p1nwyz.e1tzin5v0 {
-            padding: 1rem;
-            border-radius: 10px;
-            background-color: #f0f2f6;
-        }
-        div.stChatMessage {
-            padding: 1rem;
-            border-radius: 15px;
-            margin-bottom: 0.5rem;
+        
+        div[data-testid="stVerticalBlock"] > div:has(div.stChatMessage) {
+            padding: 0 1rem;
         }
     </style>
     """, unsafe_allow_html=True)
 
-    # Create three columns for layout
-    left_col, main_col, right_col = st.columns([1, 3, 1])
+    initialize_session_state()
+    if 'chatbot' not in st.session_state:
+        st.session_state.chatbot = RuleBasedChatbot()
 
-    with main_col:
-        st.title("🤖 AI Assistant")
-        
-        # Chat container with fixed height and scrolling
-        chat_placeholder = st.container()
-        
-        # Add some spacing
-        st.markdown("<br>" * 2, unsafe_allow_html=True)
-        
-        # Input container at the bottom
-        input_container = st.container()
+    # Create a container for the chat messages with some padding
+    chat_container = st.container()
+    
+    # Input container at the bottom
+    with st.container():
+        cols = st.columns([8, 1])
+        with cols[0]:
+            user_input = st.text_input(
+                "Type your message...",
+                key=f"user_input_{st.session_state.input_key}",
+                label_visibility="collapsed"
+            )
+        with cols[1]:
+            send_button = st.button("Send", key=f"send_{st.session_state.input_key}")
 
-        with input_container:
-            cols = st.columns([8, 1])
-            with cols[0]:
-                user_input = st.text_input(
-                    "Type your message...",
-                    key=f"user_input_{st.session_state.input_key}",
-                    label_visibility="collapsed"
-                )
-            with cols[1]:
-                send_button = st.button("➤", key=f"send_{st.session_state.input_key}")
+    # Process input
+    if user_input and (send_button or True):
+        st.session_state.chat_history.append(("user", user_input))
+        response = st.session_state.chatbot.respond(user_input)
+        st.session_state.chat_history.append(("assistant", response))
+        st.session_state.input_key += 1
+        st.rerun()
 
-        # Display chat history in the chat container
-        with chat_placeholder:
-            for role, message in st.session_state.chat_history:
-                with st.chat_message(role):
-                    st.write(message)
-
-        # Process input
-        if user_input and (send_button or True):
-            st.session_state.chat_history.append(("user", user_input))
-            response = st.session_state.chatbot.respond(user_input)
-            st.session_state.chat_history.append(("assistant", response))
-            st.session_state.input_key += 1
-            st.rerun()
+    # Display chat history with custom styling
+    with chat_container:
+        for role, message in st.session_state.chat_history:
+            if role == "user":
+                st.markdown(f'<div class="user-message"><div>{message}</div></div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="assistant-message"><div>{message}</div></div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
-    initialize_session_state()
     main()
